@@ -12,27 +12,27 @@ import * as AWS from 'aws-sdk';
 export class AppComponent implements OnInit {
   name: string;
   salutation: string;
-  private api = '' // replace by your api gateway endpoints
+  private api = 'http://186.6.141.44:5000/' // replace by your api gateway endpoints
   private AWSConfiguration: any;
   private mqttClient: AWSIoTData.device;
   constructor(private http: HttpClient) {
     this.AWSConfiguration = {
-      poolId: '', //'us-east-1:e4803d3b-42d5-496f-9c5a-408f20eb28e4', // 'YourCognitoIdentityPoolId'
-      host: '', // 'YourAwsIoTEndpoint', e.g. 'prefix.iot.us-east-1.amazonaws.com'
+      poolId: 'us-east-1:5ca8ecf0-77d5-4054-b6d4-432b40e62fb8', //'us-east-1:e4803d3b-42d5-496f-9c5a-408f20eb28e4', // 'YourCognitoIdentityPoolId'
+      host: 'a12ejgff2slvq5-ats.iot.us-east-1.amazonaws.com', // 'YourAwsIoTEndpoint', e.g. 'prefix.iot.us-east-1.amazonaws.com'
       region: 'us-east-1' // 'YourAwsRegion', e.g. 'us-east-1'
-    }
+    };
 
     AWS.config.region = this.AWSConfiguration.region;
-    console.log(AWS.config)
+    console.log(AWS.config);
     AWS.config.credentials = new AWS.CognitoIdentityCredentials({
       IdentityPoolId: this.AWSConfiguration.poolId
-    })
+    });
 
     const clientId = 'animals-' + (Math.floor((Math.random() * 100000) + 1));
     this.mqttClient = new AWSIoTData.device({
       region: AWS.config.region,
       host: this.AWSConfiguration.host,
-      clientId: clientId,
+      clientId,
       protocol: 'wss',
       maximumReconnectTimeMs: 8000,
       debug: false,
@@ -43,11 +43,9 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-
-
     this.mqttClient.on('connect', () => {
       console.log('mqttClient connected')
-      this.mqttClient.subscribe('animals-realtime')
+      this.mqttClient.subscribe('semaphore')
     });
 
     this.mqttClient.on('error', (err) => {
@@ -60,16 +58,15 @@ export class AppComponent implements OnInit {
       console.log('IoT msg: ', topic, msg)
     });
 
-    this.http.get(`${this.api}get-animals`
-    )
+    this.http.get(`${this.api}crossMessage`)
       .subscribe((data: any) => {
-        console.log('data: ', data)
+        console.log('data: ', data);
       });
 
   }
 
  private getCreds() {
-    console.log('getCreds called')
+    console.log('getCreds called');
 
     const cognitoIdentity = new AWS.CognitoIdentity();
     (AWS.config.credentials as any).get((err, data) => {
@@ -77,7 +74,7 @@ export class AppComponent implements OnInit {
         console.log('retrieved identity: ' + (AWS.config.credentials as any).identityId)
         var params = {
           IdentityId: (AWS.config.credentials as any).identityId as any
-        }
+        };
         cognitoIdentity.getCredentialsForIdentity(params, (err, data) => {
           if (!err) {
             this.mqttClient.updateWebSocketCredentials(data.Credentials.AccessKeyId,
@@ -104,4 +101,7 @@ export class AppComponent implements OnInit {
       });
   }
 
+  onClickMe() {
+
+  }
 }
